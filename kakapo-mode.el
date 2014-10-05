@@ -20,7 +20,7 @@
 ;
 ; Version: 0.1
 ; Keywords: indentation
-; URL: http://listx.github.io/kakapo-mode
+; URL: https://github.com/listx/kakapo-mode
 
 ;; ABOUT
 
