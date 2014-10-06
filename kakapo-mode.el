@@ -308,8 +308,11 @@ above."
 				(error
 					(concat
 						"<< SPACE-BASED INDENTATION DETECTED ON "
-						"NEAREST LINE "
-						(if above "ABOVE" "BELOW")
+						(cond
+							((string-match " " lw-initial) "CURRENT LINE")
+							(above  "NEAREST LINE ABOVE")
+							(t      "NEAREST LINE BELOW")
+						)
 						" >>"
 					)
 				)
