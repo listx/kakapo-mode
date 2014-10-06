@@ -125,7 +125,7 @@
 		)
 		(save-excursion
 			(if (string= "" lw-initial)
-				(catch 'tagName
+				(catch 'loopVal
 					(while (not (eq (point) point-end))
 						(forward-line (if above -1 1))
 						(beginning-of-line)
@@ -135,7 +135,7 @@
 								(not (string= "" lw))
 								(string-match "[^ \t]" lc)
 							)
-							(throw 'tagName lw)
+							(throw 'loopVal lw)
 						)
 					)
 					""
