@@ -118,27 +118,42 @@
 	"Search either above or below the current line for leading whitespace."
 	(let*
 		(; bindings
-			(point-end (if above (point-min) (point-max)))
+			(point-end nil)
 			(lw-initial (kakapo-lw))
 			(lw "")
 			(lc "")
+			(stop-loop nil)
 		)
 		(save-excursion
 			(if (string= "" lw-initial)
-				(catch 'loopVal
-					(while (not (eq (point) point-end))
+				(progn
+					; `point-end' ensures that we always terminte the `while'
+					; loop. If we're searching up, we use `point-min', because
+					; that is the ultimate `line-beginning-position' (which is
+					; where `forward-line' goes to) when we move up one line
+					; repeatedly to the start of the buffer. If we move down to
+					; the end of the buffer, we use `point-max', and not the
+					; last line's first column, because Emacs defines
+					; `point-max' as the point that would be reached if we call
+					; `forward-line' past the end of the buffer. In short, the
+					; `point-end' variable always guarantees that we exit the
+					; `while' loop if all the lines searched either above or
+					; below are all blank lines.
+
+					; The `stop-loop' variable is there to short-circuit the
+					; loop if the line we're on is not a blank line.
+					(setq point-end (if above (point-min) (point-max)))
+					(while (and (not stop-loop) (not (eq (point) point-end)))
 						(forward-line (if above -1 1))
 						(beginning-of-line)
 						(setq lw (kakapo-lw))
 						(setq lc (kakapo-lc))
-						(if (or
-								(not (string= "" lw))
-								(string-match "[^ \t]" lc)
-							)
-							(throw 'loopVal lw)
+						; Only continue the search if the current line is a blank line.
+						(if (not (string= "" lc))
+							(setq stop-loop t)
 						)
 					)
-					""
+					lw
 				)
 				lw-initial
 			)
