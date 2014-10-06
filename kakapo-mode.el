@@ -110,13 +110,8 @@
 (defun kakapo-lc ()
 	"Retrieve the current line's contents."
 	(interactive)
-	(let*
-		(; bindings
-			(point-column-0 (line-beginning-position))
-		)
-		(buffer-substring-no-properties
-			point-column-0 (line-end-position))
-	)
+	(buffer-substring-no-properties
+		(line-beginning-position) (line-end-position))
 )
 
 (defun kakapo-lw-search (above)
