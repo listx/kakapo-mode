@@ -264,9 +264,7 @@ on tab-width, to simulate a real tab character; this is just like
 
 ; Pressing RETURN/ENTER is such a closely-tied operation to inserting tabs and
 ; indentation, that we define a companion function to go along with
-; kakapo-tab. Note that the correctness of the resulting leading whitespace
-; (i.e., refraining from introducing mixed tabs/spaces) depends entirely on the
-; correctness of the current line's own leading whitespace.
+; kakapo-tab.
 ;
 ; You can use this function like so:
 ;
@@ -274,7 +272,37 @@ on tab-width, to simulate a real tab character; this is just like
 (defun kakapo-ret-and-indent ()
 	"Insert a newline at point, and indent relative to the current line."
 	(interactive)
-	(insert (concat "\n" (kakapo-lw)))
+	(let*
+		(
+			(lw (kakapo-lw))
+			(lc (kakapo-lc))
+		)
+		(cond
+			((string-match " " lw)
+				(error "<< SPACE-BASED INDENTATION DETECTED ON CURRENT LINE >>")
+			)
+			; For an empty line, just append a single newline.
+			((string= "" lc)
+				(insert "\n")
+			)
+			; This is an all-tabs line --- chances are that the indentation was
+			; created by this very same function (unless the file we're editing
+			; has lots of meaningless all-tabs lines); assuming this is the
+			; case, the indentation needs to be preserved as-is. So, we just add
+			; the newline at the very begnning of the line, and then move to the
+			; end of the line (leaving the indentation untouched).
+			((and (string-match "^[\t]+$" lw) (string= lw lc))
+				(progn
+					(beginning-of-line)
+					(insert "\n")
+					(end-of-line)
+				)
+			)
+			; We are here if there is some text on the line already, in which
+			; case we simply preserve whatever indentation we found.
+			(t (insert (concat "\n" lw)))
+		)
+	)
 )
 
 ; The `kakapo-open-above-or-below' function is meant to be used in conjunction
