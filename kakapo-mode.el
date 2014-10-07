@@ -282,14 +282,28 @@ on tab-width, to simulate a real tab character; this is just like
 					(point)
 				)
 			)
+			(lw-below (kakapo-lw-search nil))
+			(lw-above (kakapo-lw-search t))
 		)
 		(cond
 			((string-match " " lw)
 				(error "<< SPACE-BASED INDENTATION DETECTED ON CURRENT LINE >>")
 			)
-			; For an empty line, just append a single newline.
+			; For an empty line, search downwards for indentation, and use that,
+			; if any. If no indentation below at all (all empty lines), then
+			; search for indentation above, and use that, if any. Otherwise
+			; (e.g., there is 0-indented text above and below), do not use
+			; insert any indentation.
 			((string= "" lc)
-				(insert "\n")
+				(cond
+					((not (string= "" lw-below))
+						(insert (concat "\n" lw-below))
+					)
+					((not (string= "" lw-above))
+						(insert (concat "\n" lw-above))
+					)
+					(t (insert "\n"))
+				)
 			)
 			; This is an all-tabs line --- chances are that the indentation was
 			; created by this very same function (unless the file we're editing
