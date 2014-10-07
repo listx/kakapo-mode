@@ -276,6 +276,12 @@ on tab-width, to simulate a real tab character; this is just like
 		(
 			(lw (kakapo-lw))
 			(lc (kakapo-lc))
+			(point-column-till-text
+				(save-excursion
+					(back-to-indentation)
+					(point)
+				)
+			)
 		)
 		(cond
 			((string-match " " lw)
@@ -299,8 +305,16 @@ on tab-width, to simulate a real tab character; this is just like
 				)
 			)
 			; We are here if there is some text on the line already, in which
-			; case we simply preserve whatever indentation we found.
-			(t (insert (concat "\n" lw)))
+			; case we simply preserve whatever indentation we found. We take
+			; care to remove any whitespace we may be breaking up.
+			(t
+				(progn
+					(if (> (point) point-column-till-text)
+							(delete-horizontal-space)
+					)
+					(insert (concat "\n" lw))
+				)
+			)
 		)
 	)
 )
