@@ -323,9 +323,7 @@ on tab-width, to simulate a real tab character; this is just like
 			; care to remove any whitespace we may be breaking up.
 			(t
 				(progn
-					(if (> (point) point-column-till-text)
-							(delete-horizontal-space)
-					)
+					(delete-horizontal-space)
 					(insert (concat "\n" lw))
 				)
 			)
