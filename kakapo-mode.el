@@ -331,9 +331,8 @@ on tab-width, to simulate a real tab character; this is just like
 	)
 )
 
-; The `kakapo-open-above-or-below' function is meant to be used in conjunction
-; with evil-mode, where the default "o" and "O" keys introduce mixed tab/space
-; indentation.
+; The `kakapo-open' function is meant to be used in conjunction with evil-mode,
+; where the default "o" and "O" keys introduce mixed tab/space indentation.
 (defun kakapo-open (above)
 	"Insert a newline above if `above' is t, and indent relative to the current
 line (not the line(s) above, as with Evil's default 'o'. If the
