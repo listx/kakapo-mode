@@ -74,6 +74,7 @@
 ;   (define-key evil-normal-state-map "o" (lambda () (interactive) (kakapo-open nil)))
 ;   (define-key evil-normal-state-map "O" (lambda () (interactive) (kakapo-open t)))
 ;   (define-key evil-insert-state-map (kbd "RET") 'kakapo-ret-and-indent)
+;   (define-key evil-insert-state-map (kbd "<S-backspace>") 'kakapo-upline)
 ;
 ;; BEGIN PROGRAM
 
@@ -385,6 +386,58 @@ above."
 					)
 				)
 			)
+		)
+	)
+)
+
+; Delete the current whitespace-only line, and go up one line. If you call
+; `kakapo-ret-and-indent' repeatedly, you can call `kakapo-upline' to "undo" the
+; last call. This function is not strictly necessary, but there are times when
+; one presses the RETURN key one too many times. And, undoing that mistake can
+; be cumbersome (pressing BACKSPACE repeatedly, or pressing ESC and then
+; deleting the current line ("dd") and then inserting back again at the proper
+; indentation "O") --- hence this function.
+;
+; Although the example above is the main motivation, `kakapo-upline' will try to
+; delete any blank lines above or below the cursor. The former case is the one
+; explained above. Removing blank lines below the cursor will only occur if we
+; hit a non-blank-line "wall" above us. And then, if we run out here,
+; `kakapo-upline' will be a NOP (non-operation --- i.e., do nothing).
+(defun kakapo-upline ()
+	(interactive)
+	(let
+		(; bindings
+			(lc-above
+				(save-excursion
+					(forward-line -1)
+					(kakapo-lc)
+				)
+			)
+			(lc-below
+				(save-excursion
+					(forward-line 1)
+					(kakapo-lc)
+				)
+			)
+		)
+		(cond
+			((string= "" lc-above)
+				(progn
+					(forward-line -1)
+					(delete-backward-char 1)
+					(forward-line 1)
+					(if (string-match "^[\t]+$" (kakapo-lc))
+						(end-of-line)
+					)
+				)
+			)
+			((string= "" lc-below)
+				(progn
+					(forward-line 1)
+					(delete-backward-char 1)
+				)
+			)
+			(t (ignore))
 		)
 	)
 )
