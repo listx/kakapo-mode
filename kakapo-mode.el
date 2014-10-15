@@ -1,5 +1,5 @@
-; kakapo-mode.el --- Only TABs for indentation (leading whitespace), and SPACES
-; for alignment.
+; kakapo-mode.el --- TABS (hard or soft) for indentation (leading whitespace),
+; and SPACES for alignment.
 
 ;; LICENSE
 
@@ -33,7 +33,8 @@
 ; the user, with some conditions:
 ;
 ;   * The concept of "indentation" and "leading whitespace" are the same.
-;   * Indentation is taken care of with TAB characters.
+;   * Indentation is taken care of with TAB characters (which are hard TABS by
+;     default) but which can be adjusted to be expanded into SPACES.
 ;   * If you press a TAB character *after* some text, we insert SPACES up to the
 ;     next tab-stop column; this is a simpler version of "Smart Tabs"
 ;     (http://www.emacswiki.org/emacs/SmartTabs).
@@ -44,9 +45,11 @@
 ; latter requires you to write helper functions for it to work properly;
 ; instead, kakapo-mode relies on the human user for aesthetics.
 ;
-; `kakapo-mode' inserts a TAB when we are indenting (leading whitespace), or the
-; right number of SPACE characters when we are aligning something inside or at
-; the end of a line.
+; Central to `kakapo-mode' is the idea of the kakapo tab, or "KTAB". The KTAB is
+; either a hard TAB character or a `tab-width' number of SPACE characters,
+; depending on the `kakapo-soft-tab' variable. `kakapo-mode' inserts a KTAB when
+; we are indenting (leading whitespace), or the right number of SPACE characters
+; when we are aligning something inside or at the end of a line.
 
 ;; INSTALLATION
 
@@ -61,19 +64,20 @@
 ; specific hook.
 ;
 ; When `kakapo-mode' is enabled, the TAB key will invoke `kakapo-tab' (inserting
-; tabs or spaces as necessary) instead of being interpreted as usual by whatever
+; KTABS or spaces as necessary) instead of being interpreted as usual by whatever
 ; mode is active.
 ;
 ; You should probably use the following keymappings to play well with Evil mode
 ; and any other mode that insists on using mixed TAB/SPACE characters for
 ; indentation (leading whitespace). Granted, these helper functions do not
 ; respect semantic indentation (as kakapo-mode doesn't care about the *number*
-; of TABS in the indentation as long as they are all TABS) --- this kind of
+; of KTABS in the indentation as long as they are all KTABS) --- this kind of
 ; simplicity is exactly what kakapo-mode is all about!
 ;
 ;   (define-key evil-normal-state-map "o" (lambda () (interactive) (kakapo-open nil)))
 ;   (define-key evil-normal-state-map "O" (lambda () (interactive) (kakapo-open t)))
 ;   (define-key evil-insert-state-map (kbd "RET") 'kakapo-ret-and-indent)
+;   (define-key evil-insert-state-map (kbd "DEL") 'kakapo-backspace)
 ;   (define-key evil-insert-state-map (kbd "<S-backspace>") 'kakapo-upline)
 ;
 ;; BEGIN PROGRAM
@@ -82,6 +86,10 @@
 (defcustom kakapo-debug nil
 	"Display debug messages instead of indenting; useful only for
 	development.")
+
+(defcustom kakapo-soft-tab nil
+	"Use hard TAB characters for indentation. If nil, use
+	`tabwidth' number of spaces.")
 
 ; Either print debug message, or execute `func'.
 (defun kakapo-indent-debug (str func)
@@ -162,6 +170,36 @@
 	)
 )
 
+(defun kakapo-all-ktab (str)
+	"Return t if the given string is composed entirely of one
+type of `ktab' (either all TABS, or the correct number of
+spaces (e.g., if 2-space tabs, make sure we have an even number
+of spaces)."
+	(interactive)
+	(let
+		(; bindings
+			(regex (if kakapo-soft-tab
+				"^[ ]+$"
+				"^[\t]+$"
+				)
+			)
+		)
+		(cond
+			((string-match "" str)
+				t
+			)
+			(kakapo-soft-tab
+				(and
+					(string-match regex str)
+					(= (% (length str) tab-width) 0)
+				)
+			)
+			(t (string-match regex str))
+		)
+	)
+
+)
+
 (defun kakapo-tab ()
 	"If point is at the beginning of a line, or if all characters
 preceding it on the current line are tab characters, insert a
@@ -189,26 +227,32 @@ on tab-width, to simulate a real tab character; this is just like
 					tab-width
 					columns-tab-width
 				))
+			; `ktab' is either a hard TAB or soft tab (spaces).
+			(ktab (if kakapo-soft-tab
+				(make-string tab-width ?\s)
+				?\t
+				)
+			)
 		)
 		(cond
 			; If the line is blank, insert a TAB.
 			((eq (line-beginning-position) (line-end-position))
 				(kakapo-indent-debug
 					"BLANK"
-					(insert ?\t)
+					(insert ktab)
 				)
 			)
 			; if line is all-whitespace, insert a TAB, unless we detect mixed
 			; tabs/spaces.
 			((string-match "^[ \t]+$" line-contents)
-				(if (string-match "^[\t]+$" line-contents)
+				(if (kakapo-all-ktab line-contents)
 					(kakapo-indent-debug
 						"TABS LINE"
-						(insert ?\t)
+						(insert ktab)
 					)
 					(error
 						(concat
-							"<<< SPACE-BASED INDENTATION DETECTED ON "
+							"<<< INVALID INDENTATION DETECTED ON "
 							"WHITESPACE-ONLY LINE >>>"))
 				)
 			)
@@ -217,16 +261,16 @@ on tab-width, to simulate a real tab character; this is just like
 			; it; we consider the case where it already has leading whitespace.
 			((string-match "^[ \t]+" line-contents)
 				; Is the leading whitespace all TABS?
-				(if (string-match "^[\t]+$" (kakapo-lw))
+				(if (kakapo-all-ktab (kakapo-lw))
 					; Since the leading whitespace is well-formed, we only need
 					; consider where point is. If point is inside the
 					; well-formed whitespace, we insert a TAB. Otherwise, we
 					; insert saces because we are obviously NOT trying to indent
 					; all the text.
-					(if (string-match "^[\t]*$" up-to-point)
+					(if (string-match "^[ \t]*$" up-to-point)
 						(kakapo-indent-debug
 							"LEADING TABS TO POINT"
-							(insert ?\t)
+							(insert ktab)
 						)
 						(kakapo-indent-debug
 							"LEADING TABS: POINT IS ELSEWHERE"
@@ -239,7 +283,7 @@ on tab-width, to simulate a real tab character; this is just like
 					)
 					(error
 						(concat
-							"<<< SPACE-BASED INDENTATION DETECTED ON "
+							"<<< INVALID INDENTATION DETECTED ON "
 							"NON-EMPTY LINE >>>"))
 				)
 			)
@@ -249,7 +293,7 @@ on tab-width, to simulate a real tab character; this is just like
 			(t (if (eq point-column-0 p)
 				(kakapo-indent-debug
 					"NO LEADING WHITESPACE"
-					(insert ?\t)
+					(insert ktab)
 				)
 				(kakapo-indent-debug
 					"NO LEADING WHITESPACE: POINT IS ELSEWHERE"
@@ -257,6 +301,32 @@ on tab-width, to simulate a real tab character; this is just like
 						repeat
 						columns-til-next-tab-stop
 						do (insert " ")))
+				)
+			)
+		)
+	)
+)
+
+(defun kakapo-backspace ()
+	"When we press BACKSPACE and we *only* have leading indentation, and point
+is at the end of the line, we should delete backwards 1 level of indentation,
+whether that means deleting 1 TAB character, or `tab-width' number of SPACE
+characters."
+	(interactive)
+	(let
+		(; bindings
+			(up-to-point
+				(buffer-substring-no-properties
+					(line-beginning-position)
+					(point)
+				)
+			)
+		)
+		(if (kakapo-all-ktab up-to-point)
+			(delete-backward-char (if kakapo-soft-tab tab-width 1))
+			(error
+				(concat
+					"<<< INVALID INDENTATION DETECTED >>>"
 				)
 			)
 		)
@@ -285,10 +355,11 @@ on tab-width, to simulate a real tab character; this is just like
 			)
 			(lw-below (kakapo-lw-search nil))
 			(lw-above (kakapo-lw-search t))
+			(invalid-char (if kakapo-soft-tab "\t" " "))
 		)
 		(cond
-			((string-match " " lw)
-				(error "<< SPACE-BASED INDENTATION DETECTED ON CURRENT LINE >>")
+			((string-match invalid-char lw)
+				(error "<< INVALID INDENTATION DETECTED ON CURRENT LINE >>")
 			)
 			; For an empty line, search downwards for indentation, and use that,
 			; if any. If no indentation below at all (all empty lines), then
@@ -312,7 +383,7 @@ on tab-width, to simulate a real tab character; this is just like
 			; case, the indentation needs to be preserved as-is. So, we just add
 			; the newline at the very begnning of the line, and then move to the
 			; end of the line (leaving the indentation untouched).
-			((and (string-match "^[\t]+$" lw) (string= lw lc))
+			((and (kakapo-all-ktab lw) (string= lw lc))
 				(progn
 					(beginning-of-line)
 					(insert "\n")
@@ -352,6 +423,7 @@ above."
 			(lw "")
 			(lc "")
 			(lw-nearest (kakapo-lw-search above))
+			(invalid-char (if kakapo-soft-tab "\t" " "))
 		)
 		(cond
 			; If we're on the first line, and we want to open above, add a
@@ -365,7 +437,7 @@ above."
 					(evil-append nil)
 				)
 			)
-			((not (string-match " " lw-nearest))
+			((not (string-match invalid-char lw-nearest))
 				(progn
 					(if above (forward-line -1))
 					(end-of-line)
@@ -376,7 +448,7 @@ above."
 			(t
 				(error
 					(concat
-						"<< SPACE-BASED INDENTATION DETECTED ON "
+						"<< INVALID INDENTATION DETECTED ON "
 						(cond
 							((string-match " " lw-initial) "CURRENT LINE")
 							(above  "NEAREST LINE ABOVE")
@@ -426,7 +498,7 @@ above."
 					(forward-line -1)
 					(delete-backward-char 1)
 					(forward-line 1)
-					(if (string-match "^[\t]+$" (kakapo-lc))
+					(if (kakapo-all-ktab (kakapo-lc))
 						(end-of-line)
 					)
 				)
