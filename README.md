@@ -1,6 +1,6 @@
 #kakapo-mode
 
-Use TABs for indentation (leading whitespace), and SPACEs for everything else.
+Use TABS or SPACES (but not both!) for indentation (leading whitespace), and SPACES for everything else.
 
 ##Install
 
