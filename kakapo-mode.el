@@ -307,6 +307,31 @@ on tab-width, to simulate a real tab character; this is just like
 	)
 )
 
+(defun kakapo-point-in-lw ()
+	"Is point inside the leading whitespace on the current line, if any, and is
+it correctly placed in it (i.e., on a column that is modulo 0
+w.r.t. tab-width)?"
+	(interactive)
+	(let
+		(
+			(point-column-till-text
+				(save-excursion
+					(back-to-indentation)
+					(point)
+				)
+			)
+			(lw (kakapo-lw))
+		)
+		(and
+			(<= (point) point-column-till-text)
+			(if kakapo-soft-tab
+				(= 0 (% (current-column) tab-width))
+				t
+			)
+		)
+	)
+)
+
 (defun kakapo-backspace ()
 	"When we press BACKSPACE and we *only* have leading indentation, and point
 is at the end of the line, we should delete backwards 1 level of indentation,
@@ -322,11 +347,20 @@ characters."
 				)
 			)
 		)
-		(if (kakapo-all-ktab up-to-point)
-			(delete-backward-char (if kakapo-soft-tab tab-width 1))
-			(error
-				(concat
-					"<<< INVALID INDENTATION DETECTED >>>"
+		(cond
+			((kakapo-all-ktab up-to-point)
+				(if kakapo-soft-tab
+					(delete-backward-char
+						(if (kakapo-point-in-lw) tab-width 1)
+					)
+					(delete-backward-char 1)
+				)
+			)
+			(t
+				(error
+					(concat
+						"<<< INVALID INDENTATION DETECTED >>>"
+					)
 				)
 			)
 		)
