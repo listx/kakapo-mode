@@ -188,17 +188,15 @@ of spaces)."
 				)
 			)
 		)
-		(cond
-			((string-match "" str)
-				t
-			)
-			((not (kakapo-hard-tab))
-				(and
-					(string-match regex str)
+		(if (string-match "" str)
+			t
+			(and
+				(string-match regex str)
+				(if (kakapo-hard-tab)
+					t
 					(= (% (length str) tab-width) 0)
 				)
 			)
-			(t (string-match regex str))
 		)
 	)
 
