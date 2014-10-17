@@ -131,7 +131,7 @@
 			(lw-initial (kakapo-lw))
 			(lw "")
 			(lc "")
-			(stop-loop nil)
+			(loop-continue t)
 		)
 		(save-excursion
 			(if (string= "" lw-initial)
@@ -149,17 +149,17 @@
 					; `while' loop if all the lines searched either above or
 					; below are all blank lines.
 
-					; The `stop-loop' variable is there to short-circuit the
+					; The `loop-continue' variable is there to short-circuit the
 					; loop if the line we're on is not a blank line.
 					(setq point-end (if above (point-min) (point-max)))
-					(while (and (not stop-loop) (not (eq (point) point-end)))
+					(while (and loop-continue (not (eq (point) point-end)))
 						(forward-line (if above -1 1))
 						(beginning-of-line)
 						(setq lw (kakapo-lw))
 						(setq lc (kakapo-lc))
 						; Only continue the search if the current line is a blank line.
 						(if (not (string= "" lc))
-							(setq stop-loop t)
+							(setq loop-continue nil)
 						)
 					)
 					lw
