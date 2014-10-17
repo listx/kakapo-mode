@@ -47,9 +47,10 @@
 ;
 ; Central to `kakapo-mode' is the idea of the kakapo tab, or "KTAB". The KTAB is
 ; either a hard TAB character or a `tab-width' number of SPACE characters,
-; depending on the `kakapo-soft-tab' variable. `kakapo-mode' inserts a KTAB when
-; we are indenting (leading whitespace), or the right number of SPACE characters
-; when we are aligning something inside or at the end of a line.
+; depending on whether `indent-tabs-mode' is set to true. `kakapo-mode' inserts
+; a KTAB when we are indenting (leading whitespace), or the right number of
+; SPACE characters when we are aligning something inside or at the end of a
+; line.
 
 ;; INSTALLATION
 
@@ -87,9 +88,12 @@
 	"Display debug messages instead of indenting; useful only for
 	development.")
 
-(defcustom kakapo-soft-tab nil
-	"Use hard TAB characters for indentation. If nil, use
-	`tabwidth' number of spaces.")
+(defun kakapo-hard-tab ()
+	"Whether to use hard TAB characters for indentation. If nil, use `tabwidth'
+	number of spaces."
+	(interactive)
+	(bound-and-true-p indent-tabs-mode)
+)
 
 ; Either print debug message, or execute `func'.
 (defun kakapo-indent-debug (str func)
@@ -178,9 +182,9 @@ of spaces)."
 	(interactive)
 	(let
 		(; bindings
-			(regex (if kakapo-soft-tab
-				"^[ ]+$"
+			(regex (if (kakapo-hard-tab)
 				"^[\t]+$"
+				"^[ ]+$"
 				)
 			)
 		)
@@ -188,7 +192,7 @@ of spaces)."
 			((string-match "" str)
 				t
 			)
-			(kakapo-soft-tab
+			((not (kakapo-hard-tab))
 				(and
 					(string-match regex str)
 					(= (% (length str) tab-width) 0)
@@ -228,9 +232,9 @@ on tab-width, to simulate a real tab character; this is just like
 					columns-tab-width
 				))
 			; `ktab' is either a hard TAB or soft tab (spaces).
-			(ktab (if kakapo-soft-tab
-				(make-string tab-width ?\s)
+			(ktab (if (kakapo-hard-tab)
 				?\t
+				(make-string tab-width ?\s)
 				)
 			)
 		)
@@ -324,9 +328,9 @@ w.r.t. tab-width)?"
 		)
 		(and
 			(<= (point) point-column-till-text)
-			(if kakapo-soft-tab
-				(= 0 (% (current-column) tab-width))
+			(if (kakapo-hard-tab)
 				t
+				(= 0 (% (current-column) tab-width))
 			)
 		)
 	)
@@ -349,11 +353,11 @@ characters."
 		)
 		(cond
 			((kakapo-all-ktab up-to-point)
-				(if kakapo-soft-tab
+				(if (kakapo-hard-tab)
+					(delete-backward-char 1)
 					(delete-backward-char
 						(if (kakapo-point-in-lw) tab-width 1)
 					)
-					(delete-backward-char 1)
 				)
 			)
 			(t
@@ -389,7 +393,7 @@ characters."
 			)
 			(lw-below (kakapo-lw-search nil))
 			(lw-above (kakapo-lw-search t))
-			(invalid-char (if kakapo-soft-tab "\t" " "))
+			(invalid-char (if (kakapo-hard-tab) " " "\t"))
 		)
 		(cond
 			((string-match invalid-char lw)
@@ -457,7 +461,7 @@ above."
 			(lw "")
 			(lc "")
 			(lw-nearest (kakapo-lw-search above))
-			(invalid-char (if kakapo-soft-tab "\t" " "))
+			(invalid-char (if (kakapo-hard-tab) " " "\t"))
 		)
 		(cond
 			; If we're on the first line, and we want to open above, add a
