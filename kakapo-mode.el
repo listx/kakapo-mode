@@ -136,10 +136,8 @@
 			(lw "")
 			(lc "")
 			(loop-continue t)
-		)
-		(save-excursion
-			(if (string= "" lw-initial)
-				(progn
+			(lw-frontier
+				(save-excursion
 					; `point-end' ensures that we always terminte the `while'
 					; loop. If we're searching up, we use `point-min', because
 					; that is the ultimate `line-beginning-position' (which is
@@ -168,8 +166,11 @@
 					)
 					lw
 				)
-				lw-initial
 			)
+		)
+		(if (string< lw-initial lw-frontier)
+			lw-frontier
+			lw-initial
 		)
 	)
 )
