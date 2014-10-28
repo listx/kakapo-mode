@@ -355,7 +355,14 @@ characters."
 				(if (kakapo-hard-tab)
 					(delete-backward-char 1)
 					(delete-backward-char
-						(if (kakapo-point-in-lw) tab-width 1)
+						(if
+							(and
+								(kakapo-point-in-lw)
+								(not (= (point) (line-beginning-position)))
+							)
+							tab-width
+							1
+						)
 					)
 				)
 			)
