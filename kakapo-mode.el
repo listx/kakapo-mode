@@ -511,9 +511,9 @@ above."
 ; `kakapo-ret-and-indent' repeatedly, you can call `kakapo-upline' to "undo" the
 ; last call. This function is not strictly necessary, but there are times when
 ; one presses the RETURN key one too many times. And, undoing that mistake can
-; be cumbersome (pressing BACKSPACE repeatedly, or pressing ESC and then
-; deleting the current line ("dd") and then inserting back again at the proper
-; indentation "O") --- hence this function.
+; be cumbersome (pressing BACKSPACE repeatedly, or, in evil mode, pressing ESC
+; and then deleting the current line ("dd") and then inserting back again at the
+; proper indentation "O") --- hence this function.
 ;
 ; Although the example above is the main motivation, `kakapo-upline' will try to
 ; delete any blank lines above or below the cursor. The former case is the one
