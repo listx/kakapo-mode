@@ -522,8 +522,12 @@ above."
 ; `kakapo-upline' will be a NOP (non-operation --- i.e., do nothing).
 (defun kakapo-upline ()
 	(interactive)
-	(let
+	(let*
 		(; bindings
+			(point-column-0 (line-beginning-position))
+			(lc-up-to-point
+				(buffer-substring-no-properties
+					point-column-0 (point)))
 			(lc-above
 				(save-excursion
 					(forward-line -1)
@@ -537,24 +541,28 @@ above."
 				)
 			)
 		)
-		(cond
-			((string= "" lc-above)
-				(progn
-					(forward-line -1)
-					(delete-backward-char 1)
-					(forward-line 1)
-					(if (kakapo-all-ktab (kakapo-lc))
-						(end-of-line)
+		(if (string-match "^[ \t]*$" lc-up-to-point)
+			(cond
+				((string= "" lc-above)
+					(progn
+						(forward-line -1)
+						(delete-backward-char 1)
+						(forward-line 1)
+						(if (kakapo-all-ktab (kakapo-lc))
+							(back-to-indentation)
+						)
 					)
 				)
-			)
-			((string= "" lc-below)
-				(progn
-					(forward-line 1)
-					(delete-backward-char 1)
+				((string= "" lc-below)
+					(progn
+						(forward-line 1)
+						(delete-backward-char 1)
+						(back-to-indentation)
+					)
 				)
+				(t (ignore))
 			)
-			(t (ignore))
+			(delete-backward-char 1)
 		)
 	)
 )
