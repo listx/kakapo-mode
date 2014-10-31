@@ -29,6 +29,7 @@ You can choose to unify all of your indentation settings (and also enable per-pr
 Your `~/.emacs.d/init.el` will now look like this:
 
 	(load "~/.emacs.d/kakapo-project-settings")
+	(require 'kakapo-mode)
 	(add-hook 'prog-mode-hook 'my-kakapo-indents)
 	(add-hook 'text-mode-hook 'my-kakapo-indents)
 	; `kakapo-open` *requires* evil-mode!
