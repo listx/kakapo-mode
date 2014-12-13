@@ -1,13 +1,13 @@
-#kakapo-mode
+# kakapo-mode
 
 Use TABS or SPACES (but not both!) for indentation (leading whitespace), and SPACES for everything else.
 
-##Install
+## Install
 
 You can find this package in [MELPA](http://melpa.org/#/kakapo-mode), and just install with the `list-packages` command in Emacs.
 For a guide on adding MELPA to your Emacs setup, see [this page](http://ergoemacs.org/emacs/emacs_package_system.html).
 
-##Example
+## Basic Configuration
 
 As the "Installation" section in `kakapo-mode.el` suggests, you might want to put in the following in your `~/.emacs.d/init.el`:
 
@@ -24,7 +24,7 @@ As the "Installation" section in `kakapo-mode.el` suggests, you might want to pu
 . This is the simplest setup; it is important to note that the `kakapo-open` function calls `(evil-append nil)` in its body and therefore requires `evil-mode` to work properly.
 If you do not use `evil-mode`, you probably don't need to use `kakapo-open` at all; still, change the calls to `define-key` to work with your non-`evil-mode` setup.
 
-### Advanced Example
+## Advanced Configuration
 
 You can choose to unify all of your indentation settings (and also enable per-project settings) by creating a file `kakapo-project-settings.el` in your `~/.emacs.d/` folder or some such, and then load it into your `.emacs.d/init.el`.
 Your `~/.emacs.d/init.el` will now look like this:
