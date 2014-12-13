@@ -4,7 +4,8 @@ Use TABS or SPACES (but not both!) for indentation (leading whitespace), and SPA
 
 ##Install
 
-See "Installation" in `kakapo-mode.el`.
+You can find this package in [MELPA](http://melpa.org/#/kakapo-mode), and just install with the `list-packages` command in Emacs.
+For a guide on adding MELPA to your Emacs setup, see [this page](http://ergoemacs.org/emacs/emacs_package_system.html).
 
 ##Example
 
