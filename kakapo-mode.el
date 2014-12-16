@@ -378,6 +378,26 @@ characters."
 	)
 )
 
+(defun kakapo-mixed-lw-ok (lw)
+	"Check if the current line is a validly sanctioned
+mixed-tabs/spaces line, where the leading whitespace is composed
+of a uniform style, such as in Linux Kernel multiline comment
+paragraphs. Also see `kakapo-ret-and-indent'."
+	(interactive)
+	(if (kakapo-hard-tab)
+		; If we are using hard tabs, then it is some multiple of hard tabs, plus
+		; one space character.
+		(string-match "^[\t]*\s$" lw)
+		; If we have soft tabs only, then we are only dealing with spaces. We
+		; can be sure that the number of these space characters is some multiple
+		; of `tab-width' plus 1, and so just test the modulus. This will break
+		; if `tab-width' is defined to be 1, because the modulus will always be
+		; 0, but we do not care about that extreme case because no one on planet
+		; Earth will ever bother to set `tab-width' to 1.
+		(= 1 (% (length lw) tab-width))
+	)
+)
+
 ; Pressing RETURN/ENTER is such a closely-tied operation to inserting tabs and
 ; indentation, that we define a companion function to go along with
 ; kakapo-tab.
@@ -404,7 +424,22 @@ characters."
 		)
 		(cond
 			((string-match invalid-char lw)
-				(error "<< INVALID INDENTATION DETECTED ON CURRENT LINE >>")
+				; This is a workaround for C-style multi-line commenting. For
+				; example, you might have a string that looks like
+				; "<TAB><SPACE>*..." in the middle of a comment paragraph. Here
+				; the leading whitespace is a TAB followed by a SPACE. This is a
+				; reasonable coding style, and we have to support it as an
+				; exception. Still, we enforce a strict rule: TABS, if any, must
+				; be followed by SPACES.
+				(if (kakapo-mixed-lw-ok lw)
+					(insert "\n")
+					(error
+						(concat
+							"<< INVALID INDENTATION DETECTED ON"
+							"CURRENT LINE >>"
+						)
+					)
+				)
 			)
 			; For an empty line, search downwards for indentation, and use that,
 			; if any. If no indentation below at all (all empty lines), then
@@ -482,7 +517,10 @@ above."
 					(evil-append nil)
 				)
 			)
-			((not (string-match invalid-char lw-nearest))
+			((or
+				(not (string-match invalid-char lw-nearest))
+				(kakapo-mixed-lw-ok lw-nearest)
+				)
 				(progn
 					(if above (forward-line -1))
 					(end-of-line)
