@@ -337,12 +337,17 @@ w.r.t. tab-width)?"
 )
 
 (defun kakapo-backspace ()
-	"When we press BACKSPACE and we *only* have leading indentation, and point
-is at the end of the line, we should delete backwards 1 level of indentation,
-whether that means deleting 1 TAB character, or `tab-width' number of SPACE
-characters."
+	"When we press BACKSPACE and point is at the beginning of the line, we
+should delete backwards 1 level of indentation, whether that means deleting 1
+TAB character, or `tab-width' number of SPACE characters. If point is not at
+leading indentation, we check if the to-be-deleted number of characters are all
+whitespace characters; in such a case, it's OK to delete them all, as there is
+no fear of deleting multiple significant non-whitespace characters. The
+to-be-deleted number of characters is calculated with
+distance-to-prev-tab-width; the goal is to get point to end up at a
+tab-width-interval even when we're deleting pure whitespace."
 	(interactive)
-	(let
+	(let*
 		(; bindings
 			(up-to-point
 				(buffer-substring-no-properties
@@ -350,22 +355,89 @@ characters."
 					(point)
 				)
 			)
+			(tab-width-nonconformance-score
+				(% (current-column) tab-width)
+			)
+			(distance-to-prev-tab-width
+				(if (eq 0 tab-width-nonconformance-score)
+					tab-width
+					tab-width-nonconformance-score
+				)
+			)
+			(columns-til-prev-tab-stop
+				(- (point) distance-to-prev-tab-width)
+			)
+			(deletion-substr
+				(buffer-substring-no-properties
+					columns-til-prev-tab-stop
+					(point)
+				)
+			)
+			(deletion-substr-all-whitespace
+				(string-match "^[ \t]+$" deletion-substr)
+			)
 		)
 		(cond
 			((kakapo-all-ktab up-to-point)
-				(if (kakapo-hard-tab)
-					(delete-backward-char 1)
-					(delete-backward-char
-						(if
-							(and
-								(kakapo-point-in-lw)
-								(not (= (point) (line-beginning-position)))
-							)
-							tab-width
+				(delete-backward-char
+					(cond
+						; If at beginning of the line, delete 1 char only --- no
+						; exceptions!
+						((= (point) (line-beginning-position))
 							1
 						)
+						((kakapo-point-in-lw)
+							(if (kakapo-hard-tab)
+								1
+								distance-to-prev-tab-width
+							)
+						)
+						; We're here if point is in a 'messy' place somewhere in
+						; the middle of text. Here we take care to see if there
+						; is a lot of whitespace that we could delete, and if
+						; so, aggressively delete away any space/tab characters.
+						; We don't care about hard/soft tabs, because by design
+						; Kakapo inserts purely space characters if we press TAB
+						; in the middle of some text; the idea is to
+						; aggressively delete as many whitespace characters as
+						; we can, up to the point of the most evenly-divisible
+						; 'tab-width' mark. The fact that
+						; `deletion-substr-all-whitespace' checks for both
+						; spaces and tabs, and that this allows us to naively
+						; delete space and tab characters *without* thinking
+						; about how those hard TABs might be displayed on
+						; screen, is a conscious design choice. We don't care
+						; much about destroying TAB characters if they exist in
+						; the middle of a line, because that goes against how
+						; Kakapo behaves when indenting in the middle of a line
+						; (where it chooses to insert space characters, even if
+						; we tell Kakapo to use hard tabs).
+						(deletion-substr-all-whitespace
+							distance-to-prev-tab-width
+						)
+						; We cannot aggressively find any immediately preceding
+						; contiguous strip of whitespace characters, so we
+						; conservatively delete just 1 character, as BACKSPACE
+						; was naively intended to do.
+						(t 1)
 					)
 				)
+;				(if (kakapo-hard-tab)
+;					(delete-backward-char 1)
+;					(delete-backward-char
+;						(if
+;							(and
+;								(or
+;									(kakapo-point-in-lw)
+;									deletion-substr-all-whitespace
+;								)
+;								(not (= (point) (line-beginning-position)))
+;							)
+;							distance-to-prev-tab-width
+;							1
+;						)
+;					)
+;				)
 			)
 			(t
 				(error
