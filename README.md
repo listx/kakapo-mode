@@ -187,3 +187,24 @@ You can then set `kakapo-project-settings.el` as follows:
 
 Now, you have per-project indentation settings that are different than the default ones.
 If you know emacs lisp, you can probably write a less repetitive block of code than the above.
+
+## Quirks
+
+### Haskell
+
+The `haskell-cabal-mode` major mode that comes with `haskell-mode`, as of 2015-01-13 seems to remap keys and somehow ignore Kakapo mode.
+You can still make Kakapo work by doing the following:
+
+```
+(evil-define-key 'insert haskell-cabal-mode-map (kbd "<tab>") 'kakapo-tab)
+(evil-define-key 'insert haskell-cabal-mode-map (kbd "DEL") 'kakapo-backspace)
+(add-hook 'haskell-cabal-mode-hook
+	(lambda ()
+		(kakapo-mode)
+		(setq indent-tabs-mode nil)
+		(setq tab-width 2)
+		(setq evil-shift-width 2)
+	)
+)
+
+```
