@@ -16,7 +16,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;; Version: 0.2
+;; Version: 1.0
 ;; Keywords: indentation
 ;; URL: https://github.com/listx/kakapo-mode
 ;; Package-Requires: ((cl-lib "0.5"))
