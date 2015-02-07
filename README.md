@@ -208,3 +208,21 @@ You can still make Kakapo work by doing the following:
 )
 
 ```
+
+## How to contribute
+
+1. Fork it to your Github account.
+2. Create a new branch named after your feature/bugfix/intention.
+3. Push your branch to your forked repo.
+4. Create a pull request!
+
+Ideally, I'd love to use Git's own policy of having a read-only official repo, with the development/discussion taking place in a mailing list.
+But as this project is so small, the above way is probably best.
+
+## Bugs? Comments? Issues? Concerns? Opinions?
+
+Please don't hesitate to write comments, suggestions, and/or observations to the issue tracker.
+Click on the green "New issue" button to voice your concerns.
+You might write, "`kakapo-mode` totally sucks."
+And, maybe it does!
+But please tell us *why* it sucks, so that we can hopefully make it better.
