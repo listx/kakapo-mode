@@ -505,10 +505,26 @@ paragraphs. Also see `kakapo-ret-and-indent'."
 			((string= "" lc)
 				(cond
 					((not (string= "" lw-below))
-						(insert (concat "\n" lw-below))
+						(if (kakapo-all-ktab lw-below)
+							(insert (concat "\n" lw-below))
+							(error
+								(concat
+									"<< INVALID INDENTATION DETECTED ON "
+									"NEAREST LINE BELOW"
+								)
+							)
+						)
 					)
 					((not (string= "" lw-above))
-						(insert (concat "\n" lw-above))
+						(if (kakapo-all-ktab lw-above)
+							(insert (concat "\n" lw-above))
+							(error
+								(concat
+									"<< INVALID INDENTATION DETECTED ON "
+									"NEAREST LINE ABOVE"
+								)
+							)
+						)
 					)
 					(t (insert "\n"))
 				)
