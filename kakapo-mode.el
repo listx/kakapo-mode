@@ -190,7 +190,7 @@ of spaces)."
 				)
 			)
 		)
-		(if (string-match "" str)
+		(if (string= "" str)
 			t
 			(and
 				(string-match regex str)
