@@ -584,6 +584,17 @@ above."
 			(lc "")
 			(lw-nearest (kakapo-lw-search above))
 			(invalid-char (if (kakapo-hard-tab) " " "\t"))
+			(errmsg
+				(concat
+					"<< INVALID INDENTATION DETECTED ON????????? "
+					(cond
+						((string-match invalid-char lw-initial) "CURRENT LINE")
+						(above  "NEAREST LINE ABOVE")
+						(t      "NEAREST LINE BELOW")
+					)
+					" >>"
+				)
+			)
 		)
 		(cond
 			; If we're on the first line, and we want to open above, add a
@@ -601,26 +612,17 @@ above."
 				(not (string-match invalid-char lw-nearest))
 				(kakapo-mixed-lw-ok lw-nearest)
 				)
-				(progn
-					(if above (forward-line -1))
-					(end-of-line)
-					(insert (concat "\n" lw-nearest))
-					(evil-append nil)
-				)
-			)
-			(t
-				(error
-					(concat
-						"<< INVALID INDENTATION DETECTED ON "
-						(cond
-							((string-match " " lw-initial) "CURRENT LINE")
-							(above  "NEAREST LINE ABOVE")
-							(t      "NEAREST LINE BELOW")
-						)
-						" >>"
+				(if (kakapo-all-ktab lw-nearest)
+					(progn
+						(if above (forward-line -1))
+						(end-of-line)
+						(insert (concat "\n" lw-nearest))
+						(evil-append nil)
 					)
+					(error errmsg)
 				)
 			)
+			(t (error errmsg))
 		)
 	)
 )
