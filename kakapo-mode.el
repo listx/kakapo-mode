@@ -378,7 +378,7 @@ tab-width-interval even when we're deleting pure whitespace."
 			)
 		)
 		(cond
-			((kakapo-all-ktab up-to-point)
+			((kakapo-all-ktab (kakapo-lw))
 				(delete-backward-char
 					(cond
 						; If at beginning of the line, delete 1 char only --- no
