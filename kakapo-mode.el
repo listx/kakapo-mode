@@ -508,7 +508,7 @@ paragraphs. Also see `kakapo-ret-and-indent'."
 					(error
 						(concat
 							"<< INVALID INDENTATION DETECTED ON"
-							"CURRENT LINE >>"
+							" CURRENT LINE >>"
 						)
 					)
 				)
