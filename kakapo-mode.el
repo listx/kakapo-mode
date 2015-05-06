@@ -530,9 +530,17 @@ paragraphs. Also see `kakapo-ret-and-indent'."
 			; case we simply preserve whatever indentation we found. We take
 			; care to remove any whitespace we may be breaking up.
 			(t
-				(progn
-					(delete-horizontal-space)
-					(insert (concat "\n" lw))
+				(if (kakapo-all-ktab lw)
+					(progn
+						(delete-horizontal-space)
+						(insert (concat "\n" lw))
+					)
+					(error
+						(concat
+							"<< INVALID INDENTATION DETECTED ON"
+							" CURRENT LINE >>"
+						)
+					)
 				)
 			)
 		)
