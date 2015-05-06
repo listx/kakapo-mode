@@ -422,22 +422,6 @@ tab-width-interval even when we're deleting pure whitespace."
 						(t 1)
 					)
 				)
-;				(if (kakapo-hard-tab)
-;					(delete-backward-char 1)
-;					(delete-backward-char
-;						(if
-;							(and
-;								(or
-;									(kakapo-point-in-lw)
-;									deletion-substr-all-whitespace
-;								)
-;								(not (= (point) (line-beginning-position)))
-;							)
-;							distance-to-prev-tab-width
-;							1
-;						)
-;					)
-;				)
 			)
 			(t
 				(error
