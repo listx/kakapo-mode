@@ -124,6 +124,16 @@ indentation."
 	)
 )
 
+(defun kakapo-err-msg (func-name str)
+	(concat
+		"<<< "
+		func-name
+		": "
+		str
+		" >>>"
+	)
+)
+
 (defun kakapo-lw ()
 	"Retrieve the leading whitespace of the current line."
 	(interactive)
@@ -258,6 +268,7 @@ on tab-width, to simulate a real tab character; this is just like
 				(make-string tab-width ?\s)
 				)
 			)
+			(func-name "kakapo-tab")
 		)
 		(cond
 			; If the line is blank, insert a TAB.
@@ -276,9 +287,10 @@ on tab-width, to simulate a real tab character; this is just like
 						"TABS LINE"
 						(insert ktab)
 					)
-					(concat
-						"<<< INVALID INDENTATION DETECTED ON "
-						"WHITESPACE-ONLY LINE >>>")
+					(kakapo-err-msg
+						func-name
+						"INVALID INDENTATION DETECTED ON WHITESPACE-ONLY LINE"
+					)
 				)
 			)
 
@@ -306,9 +318,10 @@ on tab-width, to simulate a real tab character; this is just like
 								do (insert " "))
 						)
 					)
-					(concat
-						"<<< INVALID INDENTATION DETECTED ON "
-						"NON-EMPTY LINE >>>")
+					(kakapo-err-msg
+						func-name
+						"INVALID INDENTATION DETECTED ON NON-EMPTY LINE"
+					)
 				)
 			)
 			; We do *not* have leading whitespace. There are two cases: point is
@@ -396,6 +409,7 @@ tab-width-interval even when we're deleting pure whitespace."
 			(deletion-substr-all-whitespace
 				(string-match "^[ \t]+$" deletion-substr)
 			)
+			(func-name "kakapo-backspace")
 		)
 		(kakapo-if
 			(kakapo-all-ktab (kakapo-lw))
@@ -440,7 +454,10 @@ tab-width-interval even when we're deleting pure whitespace."
 					(t 1)
 				)
 			)
-			"<<< INVALID INDENTATION DETECTED >>>"
+			(kakapo-err-msg
+				func-name
+				"INVALID INDENTATION DETECTED"
+			)
 		)
 	)
 )
@@ -488,6 +505,7 @@ paragraphs. Also see `kakapo-ret-and-indent'."
 			(lw-below (kakapo-lw-search nil))
 			(lw-above (kakapo-lw-search t))
 			(invalid-char (if (kakapo-hard-tab) " " "\t"))
+			(func-name "kakapo-ret-and-indent")
 		)
 		(cond
 			((string-match invalid-char lw)
@@ -501,9 +519,9 @@ paragraphs. Also see `kakapo-ret-and-indent'."
 				(kakapo-if
 					(kakapo-mixed-lw-ok lw)
 					(insert "\n")
-					(concat
-						"<< INVALID INDENTATION DETECTED ON"
-						" CURRENT LINE >>"
+					(kakapo-err-msg
+						func-name
+						"INVALID INDENTATION DETECTED ON CURRENT LINE"
 					)
 				)
 			)
@@ -518,9 +536,12 @@ paragraphs. Also see `kakapo-ret-and-indent'."
 						(kakapo-if
 							(kakapo-all-ktab lw-below)
 							(insert (concat "\n" lw-below))
-							(concat
-								"<< INVALID INDENTATION DETECTED ON "
-								"NEAREST LINE BELOW"
+							(kakapo-err-msg
+								func-name
+								(concat
+									"INVALID INDENTATION DETECTED ON "
+									"NEAREST LINE BELOW"
+								)
 							)
 						)
 					)
@@ -528,9 +549,12 @@ paragraphs. Also see `kakapo-ret-and-indent'."
 						(kakapo-if
 							(kakapo-all-ktab lw-above)
 							(insert (concat "\n" lw-above))
-							(concat
-								"<< INVALID INDENTATION DETECTED ON "
-								"NEAREST LINE ABOVE"
+							(kakapo-err-msg
+								func-name
+								(concat
+									"INVALID INDENTATION DETECTED ON "
+									"NEAREST LINE ABOVE"
+								)
 							)
 						)
 					)
@@ -560,9 +584,9 @@ paragraphs. Also see `kakapo-ret-and-indent'."
 						(delete-horizontal-space)
 						(insert (concat "\n" lw))
 					)
-					(concat
-						"<< INVALID INDENTATION DETECTED ON"
-						" CURRENT LINE >>"
+					(kakapo-err-msg
+						func-name
+						"INVALID INDENTATION DETECTED ON CURRENT LINE"
 					)
 				)
 			)
@@ -591,17 +615,17 @@ above."
 			(lc "")
 			(lw-nearest (kakapo-lw-search above))
 			(invalid-char (if (kakapo-hard-tab) " " "\t"))
-			(errmsg
+			(err-msg
 				(concat
-					"<< INVALID INDENTATION DETECTED ON????????? "
+					"INVALID INDENTATION DETECTED ON "
 					(cond
 						((string-match invalid-char lw-initial) "CURRENT LINE")
 						(above  "NEAREST LINE ABOVE")
 						(t      "NEAREST LINE BELOW")
 					)
-					" >>"
 				)
 			)
+			(func-name "kakapo-open")
 		)
 		(if (and above (eq (line-beginning-position) (point-min)))
 			; If we're on the first line, and we want to open above, add a
@@ -627,7 +651,10 @@ above."
 					(insert (concat "\n" lw-nearest))
 					(evil-append nil)
 				)
-				errmsg
+				(kakapo-err-msg
+					func-name
+					err-msg
+				)
 			)
 
 		)
