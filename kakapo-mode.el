@@ -31,14 +31,14 @@
 ;; Kakapo-mode is about giving back the control of the TAB character back to you,
 ;; the user, with some conditions:
 ;;
-;;   * The concept of "indentation" and "leading whitespace" are the same.
-;;   * Indentation is taken care of with TAB characters (which are hard TABS by
-;;     default) but which can be adjusted to be expanded into SPACES.
-;;   * If you press a TAB character *after* some text, we insert SPACES up to the
-;;     next tab-stop column; this is a simpler version of "Smart Tabs"
-;;     (http://www.emacswiki.org/emacs/SmartTabs).
-;;   * If at any point we detect a mixture of tabs and spaces in the indentation,
-;;     we display a warning message instead of modifying the buffer.
+;;  * The concepts of "indentation" and "leading whitespace" are the same.
+;;  * Indentation is taken care of with TAB characters (which are hard TABS by
+;;    default) but which can be adjusted to be expanded into SPACES.
+;;  * If you press a TAB character *after* some text, we insert SPACES up to the
+;;    next tab-stop column; this is a simpler version of "Smart Tabs"
+;;    (http://www.emacswiki.org/emacs/SmartTabs).
+;;  * If at any point we detect a mixture of tabs and spaces in the indentation,
+;;    we display a warning message when modifying the buffer.
 ;;
 ;; `kakapo-mode' is very similar to "Smart Tabs", but with a key difference: the
 ;; latter requires you to write helper functions for it to work properly;
@@ -56,9 +56,9 @@
 ;; Move this file to somewhere in the `load-path'.
 ;; Then add the following lines to ~/.emacs:
 ;;
-;;   (require 'kakapo-mode)
-;;   (add-hook 'text-mode-hook 'kakapo-mode)
-;;   (add-hook 'prog-mode-hook 'kakapo-mode)
+;;  (require 'kakapo-mode)
+;;  (add-hook 'text-mode-hook 'kakapo-mode)
+;;  (add-hook 'prog-mode-hook 'kakapo-mode)
 ;;
 ;; . You can of course change, e.g., `prog-mode-hook' to be some other more
 ;; specific hook.
@@ -74,11 +74,18 @@
 ;; of KTABS in the indentation as long as they are all KTABS) --- this kind of
 ;; simplicity is exactly what kakapo-mode is all about!
 ;;
-;;   (define-key evil-normal-state-map "o" (lambda () (interactive) (kakapo-open nil)))
-;;   (define-key evil-normal-state-map "O" (lambda () (interactive) (kakapo-open t)))
-;;   (define-key evil-insert-state-map (kbd "RET") 'kakapo-ret-and-indent)
-;;   (define-key evil-insert-state-map (kbd "DEL") 'kakapo-backspace)
-;;   (define-key evil-insert-state-map (kbd "<S-backspace>") 'kakapo-upline)
+;;  (define-key evil-normal-state-map "o" (lambda () (interactive) (kakapo-open nil)))
+;;  (define-key evil-normal-state-map "O" (lambda () (interactive) (kakapo-open t)))
+;;  (define-key evil-insert-state-map (kbd "RET") 'kakapo-ret-and-indent)
+;;  (define-key evil-insert-state-map (kbd "DEL") 'kakapo-backspace)
+;;  (define-key evil-insert-state-map (kbd "<S-backspace>") 'kakapo-upline)
+;;
+;; You can do
+;;
+;;  (setq kakapo-strict t)
+;;
+;; if you want to make `kakapo-mode' refuse to modify the buffer if it detects
+;; indentation errors (errors are always displayed in the echo area).
 
 ;;; Code:
 
