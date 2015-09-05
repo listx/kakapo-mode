@@ -89,6 +89,11 @@
 	"Display debug messages instead of indenting; useful only for
 	development.")
 
+(defcustom kakapo-strict nil
+	"If true, then make backspace/enter do nothing on a line with invalid
+indentation."
+)
+
 (defun kakapo-hard-tab ()
 	"Whether to use hard TAB characters for indentation. If nil, use `tabwidth'
 	number of spaces."
@@ -101,6 +106,21 @@
 	(if kakapo-debug
 		(message str)
 		func)
+)
+
+; Even if we fail the given `condition', still execute `func' if `kakapo-strict'
+; is not set to true.
+(defmacro kakapo-if (condition func str)
+	`(if ,condition
+		,func
+		(if kakapo-strict
+			(error ,str)
+			(progn
+				,func
+				(message ,str)
+			)
+		)
+	)
 )
 
 (defun kakapo-lw ()
@@ -249,15 +269,15 @@ on tab-width, to simulate a real tab character; this is just like
 			; if line is all-whitespace, insert a TAB, unless we detect mixed
 			; tabs/spaces.
 			((string-match "^[ \t]+$" line-contents)
-				(if (kakapo-all-ktab line-contents)
+				(kakapo-if
+					(kakapo-all-ktab line-contents)
 					(kakapo-indent-debug
 						"TABS LINE"
 						(insert ktab)
 					)
-					(error
-						(concat
-							"<<< INVALID INDENTATION DETECTED ON "
-							"WHITESPACE-ONLY LINE >>>"))
+					(concat
+						"<<< INVALID INDENTATION DETECTED ON "
+						"WHITESPACE-ONLY LINE >>>")
 				)
 			)
 
@@ -265,7 +285,8 @@ on tab-width, to simulate a real tab character; this is just like
 			; it; we consider the case where it already has leading whitespace.
 			((string-match "^[ \t]+" line-contents)
 				; Is the leading whitespace all TABS?
-				(if (kakapo-all-ktab (kakapo-lw))
+				(kakapo-if
+					(kakapo-all-ktab (kakapo-lw))
 					; Since the leading whitespace is well-formed, we only need
 					; consider where point is. If point is inside the
 					; well-formed whitespace, we insert a TAB. Otherwise, we
@@ -283,12 +304,10 @@ on tab-width, to simulate a real tab character; this is just like
 								columns-til-next-tab-stop
 								do (insert " "))
 						)
-
 					)
-					(error
-						(concat
-							"<<< INVALID INDENTATION DETECTED ON "
-							"NON-EMPTY LINE >>>"))
+					(concat
+						"<<< INVALID INDENTATION DETECTED ON "
+						"NON-EMPTY LINE >>>")
 				)
 			)
 			; We do *not* have leading whitespace. There are two cases: point is
@@ -377,59 +396,50 @@ tab-width-interval even when we're deleting pure whitespace."
 				(string-match "^[ \t]+$" deletion-substr)
 			)
 		)
-		(cond
-			((kakapo-all-ktab (kakapo-lw))
-				(delete-backward-char
-					(cond
-						; If at beginning of the line, delete 1 char only --- no
-						; exceptions!
-						((= (point) (line-beginning-position))
+		(kakapo-if
+			(kakapo-all-ktab (kakapo-lw))
+			(delete-backward-char
+				(cond
+					; If at beginning of the line, delete 1 char only --- no
+					; exceptions!
+					((= (point) (line-beginning-position))
+						1
+					)
+					((kakapo-point-in-lw)
+						(if (kakapo-hard-tab)
 							1
-						)
-						((kakapo-point-in-lw)
-							(if (kakapo-hard-tab)
-								1
-								distance-to-prev-tab-width
-							)
-						)
-						; We're here if point is in a 'messy' place somewhere in
-						; the middle of text. Here we take care to see if there
-						; is a lot of whitespace that we could delete, and if
-						; so, aggressively delete away any space/tab characters.
-						; We don't care about hard/soft tabs, because by design
-						; Kakapo inserts purely space characters if we press TAB
-						; in the middle of some text; the idea is to
-						; aggressively delete as many whitespace characters as
-						; we can, up to the point of the most evenly-divisible
-						; 'tab-width' mark. The fact that
-						; `deletion-substr-all-whitespace' checks for both
-						; spaces and tabs, and that this allows us to naively
-						; delete space and tab characters *without* thinking
-						; about how those hard TABs might be displayed on
-						; screen, is a conscious design choice. We don't care
-						; much about destroying TAB characters if they exist in
-						; the middle of a line, because that goes against how
-						; Kakapo behaves when indenting in the middle of a line
-						; (where it chooses to insert space characters, even if
-						; we tell Kakapo to use hard tabs).
-						(deletion-substr-all-whitespace
 							distance-to-prev-tab-width
 						)
-						; We cannot aggressively find any immediately preceding
-						; contiguous strip of whitespace characters, so we
-						; conservatively delete just 1 character, as BACKSPACE
-						; was naively intended to do.
-						(t 1)
 					)
+					; We're here if point is in a 'messy' place somewhere in the
+					; middle of text. Here we take care to see if there is a lot
+					; of whitespace that we could delete, and if so,
+					; aggressively delete away any space/tab characters. We
+					; don't care about hard/soft tabs, because by design Kakapo
+					; inserts purely space characters if we press TAB in the
+					; middle of some text; the idea is to aggressively delete as
+					; many whitespace characters as we can, up to the point of
+					; the most evenly-divisible 'tab-width' mark. The fact that
+					; `deletion-substr-all-whitespace' checks for both spaces
+					; and tabs, and that this allows us to naively delete space
+					; and tab characters *without* thinking about how those hard
+					; TABs might be displayed on screen, is a conscious design
+					; choice. We don't care much about destroying TAB characters
+					; if they exist in the middle of a line, because that goes
+					; against how Kakapo behaves when indenting in the middle of
+					; a line (where it chooses to insert space characters, even
+					; if we tell Kakapo to use hard tabs).
+					(deletion-substr-all-whitespace
+						distance-to-prev-tab-width
+					)
+					; We cannot aggressively find any immediately preceding
+					; contiguous strip of whitespace characters, so we
+					; conservatively delete just 1 character, as BACKSPACE was
+					; naively intended to do.
+					(t 1)
 				)
 			)
-			(t
-				(error
-					(concat
-						"<<< INVALID INDENTATION DETECTED >>>"
-					)
-				)
-			)
+			"<<< INVALID INDENTATION DETECTED >>>"
 		)
 	)
 )
@@ -487,13 +497,12 @@ paragraphs. Also see `kakapo-ret-and-indent'."
 				; reasonable coding style, and we have to support it as an
 				; exception. Still, we enforce a strict rule: TABS, if any, must
 				; be followed by SPACES.
-				(if (kakapo-mixed-lw-ok lw)
+				(kakapo-if
+					(kakapo-mixed-lw-ok lw)
 					(insert "\n")
-					(error
-						(concat
-							"<< INVALID INDENTATION DETECTED ON"
-							" CURRENT LINE >>"
-						)
+					(concat
+						"<< INVALID INDENTATION DETECTED ON"
+						" CURRENT LINE >>"
 					)
 				)
 			)
@@ -505,24 +514,22 @@ paragraphs. Also see `kakapo-ret-and-indent'."
 			((string= "" lc)
 				(cond
 					((not (string= "" lw-below))
-						(if (kakapo-all-ktab lw-below)
+						(kakapo-if
+							(kakapo-all-ktab lw-below)
 							(insert (concat "\n" lw-below))
-							(error
-								(concat
-									"<< INVALID INDENTATION DETECTED ON "
-									"NEAREST LINE BELOW"
-								)
+							(concat
+								"<< INVALID INDENTATION DETECTED ON "
+								"NEAREST LINE BELOW"
 							)
 						)
 					)
 					((not (string= "" lw-above))
-						(if (kakapo-all-ktab lw-above)
+						(kakapo-if
+							(kakapo-all-ktab lw-above)
 							(insert (concat "\n" lw-above))
-							(error
-								(concat
-									"<< INVALID INDENTATION DETECTED ON "
-									"NEAREST LINE ABOVE"
-								)
+							(concat
+								"<< INVALID INDENTATION DETECTED ON "
+								"NEAREST LINE ABOVE"
 							)
 						)
 					)
@@ -546,16 +553,15 @@ paragraphs. Also see `kakapo-ret-and-indent'."
 			; case we simply preserve whatever indentation we found. We take
 			; care to remove any whitespace we may be breaking up.
 			(t
-				(if (kakapo-all-ktab lw)
+				(kakapo-if
+					(kakapo-all-ktab lw)
 					(progn
 						(delete-horizontal-space)
 						(insert (concat "\n" lw))
 					)
-					(error
-						(concat
-							"<< INVALID INDENTATION DETECTED ON"
-							" CURRENT LINE >>"
-						)
+					(concat
+						"<< INVALID INDENTATION DETECTED ON"
+						" CURRENT LINE >>"
 					)
 				)
 			)
@@ -596,33 +602,33 @@ above."
 				)
 			)
 		)
-		(cond
+		(if (and above (eq (line-beginning-position) (point-min)))
 			; If we're on the first line, and we want to open above, add a
 			; newline above at the first column, disregarding all issues about
 			; indentation.
-			((and above (eq (line-beginning-position) (point-min)))
+			(progn
+				(beginning-of-line)
+				(insert "\n")
+				(forward-line -1)
+				(evil-append nil)
+			)
+			(kakapo-if
+				(and
+					(or
+						(not (string-match invalid-char lw-nearest))
+						(kakapo-mixed-lw-ok lw-nearest)
+					)
+					(kakapo-all-ktab lw-nearest)
+				)
 				(progn
-					(beginning-of-line)
-					(insert "\n")
-					(forward-line -1)
+					(when above (forward-line -1))
+					(end-of-line)
+					(insert (concat "\n" lw-nearest))
 					(evil-append nil)
 				)
+				errmsg
 			)
-			((or
-				(not (string-match invalid-char lw-nearest))
-				(kakapo-mixed-lw-ok lw-nearest)
-				)
-				(if (kakapo-all-ktab lw-nearest)
-					(progn
-						(if above (forward-line -1))
-						(end-of-line)
-						(insert (concat "\n" lw-nearest))
-						(evil-append nil)
-					)
-					(error errmsg)
-				)
-			)
-			(t (error errmsg))
+
 		)
 	)
 )
