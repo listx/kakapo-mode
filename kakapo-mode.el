@@ -102,10 +102,11 @@ indentation."
 )
 
 ; Either print debug message, or execute `func'.
-(defun kakapo-indent-debug (str func)
-	(if kakapo-debug
-		(message str)
-		func)
+(defmacro kakapo-indent-debug (str func)
+	`(progn
+		(when kakapo-debug (message ,str))
+		,func
+	)
 )
 
 ; Even if we fail the given `condition', still execute `func' if `kakapo-strict'
