@@ -389,12 +389,6 @@ tab-width-interval even when we're deleting pure whitespace."
 	(interactive)
 	(let*
 		(; bindings
-			(up-to-point
-				(buffer-substring-no-properties
-					(line-beginning-position)
-					(point)
-				)
-			)
 			(tab-width-nonconformance-score
 				(% (current-column) tab-width)
 			)
