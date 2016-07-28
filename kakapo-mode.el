@@ -285,7 +285,7 @@ on tab-width, to simulate a real tab character; this is just like
 					(insert ktab)
 				)
 			)
-			; if line is all-whitespace, insert a TAB, unless we detect mixed
+			; If line is all-whitespace, insert a TAB, unless we detect mixed
 			; tabs/spaces.
 			((string-match "^[ \t]+$" line-contents)
 				(kakapo-if
