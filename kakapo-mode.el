@@ -393,8 +393,14 @@ tab-width-interval even when we're deleting pure whitespace."
 				(% (current-column) tab-width)
 			)
 			(distance-to-prev-tab-width
-				(if (eq 0 tab-width-nonconformance-score)
-					tab-width
+				(if (and
+						(eq 0 tab-width-nonconformance-score)
+						(/= (point) (line-beginning-position))
+					)
+					(if (kakapo-hard-tab)
+						1
+						tab-width
+					)
 					tab-width-nonconformance-score
 				)
 			)
