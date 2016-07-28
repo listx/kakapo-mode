@@ -91,10 +91,14 @@
 
 (eval-when-compile (require 'cl-lib))
 
+(defgroup kakapo nil "kakapo configuration"
+	:group 'extensions)
+
 ; Internal variable used for development/testing purposes.
 (defcustom kakapo-debug nil
 	"Display debug messages instead of indenting; useful only for
-	development.")
+	development."
+	:group 'kakapo)
 
 (defcustom kakapo-strict nil
 	"If true, then make backspace/enter do nothing on a line with invalid
@@ -417,10 +421,7 @@ tab-width-interval even when we're deleting pure whitespace."
 				(string-match "^[ \t]+$" deletion-substr)
 			)
 			(func-name "kakapo-backspace")
-		)
-		(kakapo-if
-			(kakapo-all-ktab (kakapo-lw))
-			(delete-backward-char
+			(delete-amount
 				(cond
 					; If at beginning of the line, delete 1 char only --- no
 					; exceptions!
@@ -461,6 +462,10 @@ tab-width-interval even when we're deleting pure whitespace."
 					(t 1)
 				)
 			)
+		)
+		(kakapo-if
+			(kakapo-all-ktab (kakapo-lw))
+			(delete-char (- delete-amount))
 			(kakapo-err-msg
 				func-name
 				"INVALID INDENTATION DETECTED"
@@ -707,7 +712,7 @@ above."
 				((string= "" lc-above)
 					(progn
 						(forward-line -1)
-						(delete-backward-char 1)
+						(delete-char -1)
 						(forward-line 1)
 						(if (kakapo-all-ktab (kakapo-lc))
 							(back-to-indentation)
@@ -717,13 +722,13 @@ above."
 				((string= "" lc-below)
 					(progn
 						(forward-line 1)
-						(delete-backward-char 1)
+						(delete-char -1)
 						(back-to-indentation)
 					)
 				)
 				(t (ignore))
 			)
-			(delete-backward-char 1)
+			(delete-char -1)
 		)
 	)
 )
