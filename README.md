@@ -1,5 +1,7 @@
 # kakapo-mode
 
+[![MELPA](https://melpa.org/packages/kakapo-mode-badge.svg)](https://melpa.org/#/kakapo-mode)
+
 Use TABS or SPACES (but not both!) for indentation (leading whitespace), and SPACES for everything else.
 
 ## Install
