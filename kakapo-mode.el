@@ -198,7 +198,6 @@ indentation."
 					; loop if the line we're on is not a blank line.
 					(setq point-end (if above (point-min) (point-max)))
 					(while (and loop-continue (not (eq (point) point-end)))
-						(forward-line (if above -1 1))
 						(beginning-of-line)
 						(setq lw (kakapo-lw))
 						(setq lc (kakapo-lc))
@@ -206,6 +205,7 @@ indentation."
 						(if (not (string= "" lc))
 							(setq loop-continue nil)
 						)
+						(forward-line (if above -1 1))
 					)
 					lw
 				)
@@ -625,7 +625,7 @@ above."
 			(lw-initial (kakapo-lw))
 			(lw "")
 			(lc "")
-			(lw-nearest (kakapo-lw-search above))
+			(lw-nearest (kakapo-lw-search (not above)))
 			(invalid-char (if (kakapo-hard-tab) " " "\t"))
 			(err-msg
 				(concat
