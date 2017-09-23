@@ -610,14 +610,9 @@ paragraphs. Also see `kakapo-ret-and-indent'."
 ; where the default "o" and "O" keys introduce mixed tab/space indentation.
 (defun kakapo-open (above)
 	"Insert a newline above if `above' is t, and indent relative to the current
-line (not the line(s) above, as with Evil's default 'o'. If the
-current line does not have any indentation, use the indentation
-of the the closest line above.
-
-	Otherwise, if `above' is nil, insert a newline below, and
-indent relative to the current line. If the current line does not
-have any indentation, use the indentation of the the closest line
-above."
+line. For inserting above, use the current indentation amount. For inserting
+below, search below for a level of indentation that could be greater than the
+current amount, and use that if possible."
 	(interactive)
 	(let*
 		(; bindings
@@ -625,7 +620,7 @@ above."
 			(lw-initial (kakapo-lw))
 			(lw "")
 			(lc "")
-			(lw-nearest (kakapo-lw-search above))
+			(lw-nearest (kakapo-lw-search nil))
 			(invalid-char (if (kakapo-hard-tab) " " "\t"))
 			(err-msg
 				(concat
@@ -660,7 +655,7 @@ above."
 				(progn
 					(when above (forward-line -1))
 					(end-of-line)
-					(insert (concat "\n" lw-nearest))
+					(insert (concat "\n" (if above lw-initial lw-nearest)))
 					(evil-append nil)
 				)
 				(kakapo-err-msg
