@@ -105,6 +105,19 @@
 indentation."
 )
 
+(defcustom kakapo-open-blank-line-search-indentation '(nil t)
+	"This determines how opening above or below the current line behaves when the
+current line is blank. There are two booleans --- one for opening a line above,
+and another for opening a line below. If a boolean is set to true, then when we
+open a new line in that direction, and when the current line in blank, we search
+for the nearest non-blank line's indentation level, and use it.
+
+By default, we only search in the downward direction --- '(nil t).
+Vim's behavior is to always use no indentation at all --- '(nil nil).
+To always search for the indentation level, use true for both --- '(t t).
+"
+)
+
 (defun kakapo-hard-tab ()
 	"Whether to use hard TAB characters for indentation. If nil, use `tabwidth'
 	number of spaces."
@@ -609,22 +622,18 @@ paragraphs. Also see `kakapo-ret-and-indent'."
 ; The `kakapo-open' function is meant to be used in conjunction with evil-mode,
 ; where the default "o" and "O" keys introduce mixed tab/space indentation.
 (defun kakapo-open (above)
-	"Insert a newline above if `above' is t, and indent relative to the current
-line (not the line(s) above, as with Evil's default 'o'. If the
-current line does not have any indentation, use the indentation
-of the the closest line above.
-
-	Otherwise, if `above' is nil, insert a newline below, and
-indent relative to the current line. If the current line does not
-have any indentation, use the indentation of the the closest line
-above."
+	"Insert a newline above if `above' is t, otherwise below the current line. For
+inserting below, search below for a level of indentation that could be greater
+than the current amount, and use that if possible. For inserting above, use the
+current indentation level unless we are on a blank line (in which case, use the
+indentation level found above).
+"
 	(interactive)
 	(let*
 		(; bindings
 			(pos-initial (point))
 			(lw-initial (kakapo-lw))
-			(lw "")
-			(lc "")
+			(lc (kakapo-lc))
 			(lw-nearest (kakapo-lw-search above))
 			(invalid-char (if (kakapo-hard-tab) " " "\t"))
 			(err-msg
@@ -660,7 +669,18 @@ above."
 				(progn
 					(when above (forward-line -1))
 					(end-of-line)
-					(insert (concat "\n" lw-nearest))
+					(insert (concat "\n"
+						(if (string= "" lc)
+							; Behavior of opening new lines from an empty line is a special
+							; case. See `kakapo-open-blank-line-search-indentation'.
+							(if (nth (if above 0 1) kakapo-open-blank-line-search-indentation)
+								lw-nearest
+								lw-initial)
+							; For non-blank lines, only search for indentation if opening
+							; below; for opening above, use the current indentation level.
+							(if above
+								lw-initial
+								lw-nearest))))
 					(evil-append nil)
 				)
 				(kakapo-err-msg
