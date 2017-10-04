@@ -757,7 +757,7 @@ indentation level found above).
 (define-minor-mode kakapo-mode
 	"Stupid TAB character."
 	:init-value nil
-	:lighter "/kkp"
+	:lighter " kkp"
 	:global nil
 	:keymap (let ((map (make-sparse-keymap)))
 			(define-key map (kbd "TAB") 'kakapo-tab)
